@@ -35,7 +35,9 @@ function App() {
     try {
       const { data } = await api.post("/upload", formData);
 
-      setDownloadLink(data.download_link);
+      console.log(data.download_link);
+
+      setDownloadLink(`http://localhost:3333/${data.download_link}`);
 
       toast.success("Arquivo convertido com sucesso!");
     } catch (err) {
