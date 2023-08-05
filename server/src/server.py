@@ -3,6 +3,7 @@ import zipfile
 import calendar
 import time
 
+from os.path import basename
 from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify, make_response, send_file
 from flask_restful import Resource, Api
@@ -39,16 +40,13 @@ def upload_file(file):
     return new_filename
 
 @app.route('/upload', methods=['POST'])
-def newUpload():
+def upload():
     if 'file' not in request.files:
         return make_response(jsonify({ "message": "Arquivo deve ser enviado para realização do upload!" }), 400)
     
-    type_file_original = request.form.typeFile
-    type_file_to_converted = request.form.typeConvert
-    files = request.files.getlist('files')
-
-    print(type_file_original)
-    print(type_file_to_converted)
+    type_file_original = request.form.get('typeFile')
+    type_file_to_converted = request.form.get('typeConvert')
+    files = request.files.getlist('file')
 
     download_link = ""
 
@@ -57,25 +55,25 @@ def newUpload():
 
         new_filename = upload_file(file)
 
-        download_link = f"/download/{new_filename}"
+        download_link = f"download/{new_filename}"
     else:
         for file in files:
 
             upload_file(file)        
 
-            current_GMT = time.gmtime()
+        current_GMT = time.gmtime()
 
-            time_stamp = calendar.timegm(current_GMT)
+        time_stamp = calendar.timegm(current_GMT)
 
-            file_zip = os.path.join('..', 'images_converted', f'{time_stamp}_files')
+        file_zip = os.path.join('..', 'images_converted', f'{time_stamp}_files.zip')
 
         with zipfile.ZipFile(file_zip, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for current_path, _, archives in os.walk(CONVERTED_PATH_NAME):
                 for archive in archives:
                     directory = os.path.join(current_path, archive)
-                    zip_file.write(directory, os.path.realpath(directory, CONVERTED_PATH_NAME))
+                    zip_file.write(CONVERTED_PATH_NAME, basename(directory))
 
-        download_link = f"/download/{file_zip}"
+        download_link = f"download/{file_zip}"
     
     return make_response(jsonify({ "download_link": download_link }), 200)
 
