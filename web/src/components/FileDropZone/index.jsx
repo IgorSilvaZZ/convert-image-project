@@ -5,7 +5,7 @@ import folderIcon from "../../assets/folder.png";
 
 import "./style.css";
 
-const FileDropZone = ({ onDrop, handleFileChange, fileSelected }) => {
+const FileDropZone = ({ onDrop, handleFileChange, filesSelected }) => {
   const [{ canDrop, isOver }, drop] = useDrop(() => ({
     accept: [NativeTypes.FILE],
     drop: (item) => onDrop(item.files),
@@ -22,12 +22,12 @@ const FileDropZone = ({ onDrop, handleFileChange, fileSelected }) => {
       <div
         className='upload-container'
         ref={drop}
-        style={{ opacity: isActive || fileSelected ? 1 : 0.6 }}
+        style={{ opacity: isActive || filesSelected.length > 0 ? 1 : 0.6 }}
       >
         <img src={folderIcon} alt='Folder icon' />
         <h3>Arraste o arquivo</h3>
         <p>Ou</p>
-        <input type='file' name='file' onChange={handleFileChange} />
+        <input type='file' name='file' onChange={handleFileChange} multiple />
       </div>
     </>
   );
