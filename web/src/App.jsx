@@ -12,30 +12,32 @@ import "./App.css";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  const [fileSelected, setFileSelected] = useState(null);
+  const [filesSelected, setFilesSelected] = useState([]);
   const [downloadLink, setDownloadLink] = useState(null);
 
   function handleFileChange(event) {
-    const file = event.target.files[0];
+    const files = event.target.files;
 
-    setFileSelected(file);
+    setFilesSelected([...files]);
   }
 
   function onDrop(files) {
-    const [file] = files;
-
-    setFileSelected(file);
+    setFilesSelected([...files]);
   }
 
   async function handleConvertFile() {
     const formData = new FormData();
 
-    formData.append("file", fileSelected);
+    formData.append("typeConvert", "PNG");
+
+    filesSelected.forEach((file) => {
+      formData.append(`file`, file);
+    });
 
     try {
       const { data } = await api.post("/upload", formData);
 
-      console.log(data.download_link);
+      await api.post("/upload", formData);
 
       setDownloadLink(`http://localhost:3333/${data.download_link}`);
 
@@ -59,7 +61,7 @@ function App() {
               </p>
 
               <FileDropZone
-                fileSelected={fileSelected}
+                filesSelected={filesSelected}
                 onDrop={onDrop}
                 handleFileChange={handleFileChange}
               />
