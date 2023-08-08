@@ -23,7 +23,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 UPLOAD_PATH_NAME = "../images_upload"
 CONVERTED_PATH_NAME = "../images_converted"
 
-def upload_file(file):
+def upload_file(file, type_to_convert):
     filename = secure_filename(file.filename)
     file.save(os.path.join(UPLOAD_PATH_NAME, filename))
 
@@ -31,11 +31,11 @@ def upload_file(file):
 
     file_without_extension = filename.split(".")[0]
 
-    new_filename = f"{file_without_extension}.png"
+    new_filename = f"{file_without_extension}.{str(type_to_convert).lower()}"
 
     path_file_converted = os.path.join(CONVERTED_PATH_NAME, new_filename)
 
-    image_webp.save(path_file_converted, 'PNG')
+    image_webp.save(path_file_converted, str(type_to_convert).upper())
 
     return new_filename
 
@@ -44,7 +44,6 @@ def upload():
     if 'file' not in request.files:
         return make_response(jsonify({ "message": "Arquivo deve ser enviado para realização do upload!" }), 400)
     
-    type_file_original = request.form.get('typeFile')
     type_file_to_converted = request.form.get('typeConvert')
     files = request.files.getlist('file')
 
@@ -57,30 +56,35 @@ def upload():
 
         download_link = f"download/{new_filename}"
     else:
+        list_files_converted = []
+
         for file in files:
 
-            upload_file(file)        
+            new_filename = upload_file(file)
+            list_files_converted.append(os.path.join(CONVERTED_PATH_NAME, new_filename))   
 
         current_GMT = time.gmtime()
 
         time_stamp = calendar.timegm(current_GMT)
 
-        file_zip = os.path.join('..', 'images_converted', f'{time_stamp}_files.zip')
+        file_zip_name = f'{time_stamp}_files.zip'
+
+        file_zip = os.path.join(CONVERTED_PATH_NAME, file_zip_name)
 
         with zipfile.ZipFile(file_zip, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for current_path, _, archives in os.walk(CONVERTED_PATH_NAME):
-                for archive in archives:
-                    directory = os.path.join(current_path, archive)
-                    zip_file.write(CONVERTED_PATH_NAME, basename(directory))
+            for file in list_files_converted:
+                if os.path.exists(file):
+                    zip_file.write(file, os.path.basename(file))
+                else:
+                    print(f"O arquivo: {file}, não encontrado!")
 
-        download_link = f"download/{file_zip}"
+        download_link = f"download/{file_zip_name}"
     
     return make_response(jsonify({ "download_link": download_link }), 200)
 
 @app.route('/download/<filename>', methods=['GET', 'POST'])
 def download_file(filename):
-    return send_file(os.path.join(filename), as_attachment=True)
-
+    return send_file(os.path.join("../images_converted", filename), as_attachment=True)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=3333, debug=True)

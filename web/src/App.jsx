@@ -28,8 +28,7 @@ function App() {
   async function handleConvertFile() {
     const formData = new FormData();
 
-    formData.append("typeFile", "PNG");
-    formData.append("typeConvert", "WEBP");
+    formData.append("typeConvert", "PNG");
 
     filesSelected.forEach((file) => {
       formData.append(`file`, file);
@@ -40,7 +39,7 @@ function App() {
 
       await api.post("/upload", formData);
 
-      setDownloadLink(`http://localhost:3333/download/${data.download_link}`);
+      setDownloadLink(`http://localhost:3333/${data.download_link}`);
 
       toast.success("Arquivo convertido com sucesso!");
     } catch (err) {
