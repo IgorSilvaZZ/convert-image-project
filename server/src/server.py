@@ -3,10 +3,9 @@ import zipfile
 import calendar
 import time
 
-from os.path import basename
 from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify, make_response, send_file
-from flask_restful import Resource, Api
+from flask_restful import Api
 from flask_cors import CORS
 
 from PIL import Image
@@ -22,6 +21,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 UPLOAD_PATH_NAME = "../images_upload"
 CONVERTED_PATH_NAME = "../images_converted"
+
 
 def upload_file(file, type_to_convert):
     filename = secure_filename(file.filename)
@@ -39,11 +39,12 @@ def upload_file(file, type_to_convert):
 
     return new_filename
 
+
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
-        return make_response(jsonify({ "message": "Arquivo deve ser enviado para realização do upload!" }), 400)
-    
+        return make_response(jsonify({"message": "Arquivo deve ser enviado para realização do upload!"}), 400)
+
     type_file_to_converted = request.form.get('typeConvert')
     files = request.files.getlist('file')
 
@@ -52,7 +53,7 @@ def upload():
     if len(files) == 1:
         file = request.files['file']
 
-        new_filename = upload_file(file)
+        new_filename = upload_file(file, type_file_to_converted)
 
         download_link = f"download/{new_filename}"
     else:
@@ -60,8 +61,9 @@ def upload():
 
         for file in files:
 
-            new_filename = upload_file(file)
-            list_files_converted.append(os.path.join(CONVERTED_PATH_NAME, new_filename))   
+            new_filename = upload_file(file, type_file_to_converted)
+            list_files_converted.append(os.path.join(
+                CONVERTED_PATH_NAME, new_filename))
 
         current_GMT = time.gmtime()
 
@@ -79,12 +81,14 @@ def upload():
                     print(f"O arquivo: {file}, não encontrado!")
 
         download_link = f"download/{file_zip_name}"
-    
-    return make_response(jsonify({ "download_link": download_link }), 200)
+
+    return make_response(jsonify({"download_link": download_link}), 200)
+
 
 @app.route('/download/<filename>', methods=['GET', 'POST'])
 def download_file(filename):
     return send_file(os.path.join("../images_converted", filename), as_attachment=True)
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=3333, debug=True)
